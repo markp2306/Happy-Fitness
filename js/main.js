@@ -186,6 +186,7 @@ function updateNavbar() {
                 <li><a href="index.html">Home</a></li>
                 <li><a href="workouts.html">My Workouts</a></li>
                 <li><a href="#" id="openProfile">Profile</a></li>
+                <li class="mobile-only"><a href="#" id="userLogoutMobile" class="logout-link">Log Out</a></li>
             `;
         }
         if (navBtn) {
@@ -199,6 +200,7 @@ function updateNavbar() {
                 <li><a href="index.html">Home</a></li>
                 <li><a href="dashboard.html">Dashboard</a></li>
                 <li><a href="#" id="openProfile">Profile</a></li>
+                <li class="mobile-only"><a href="#" id="trainerLogoutMobile" class="logout-link">Log Out</a></li>
             `;
         }
         if (navBtn) {
@@ -213,6 +215,7 @@ function updateNavbar() {
                 <li><a href="index.html">Home</a></li>
                 <li><a href="user-login.html">Workouts</a></li>
                 <li><a href="login.html">Trainer Portal</a></li>
+                <li class="mobile-only"><a href="user-login.html" class="nav-btn-mobile">Sign In</a></li>
             `;
         }
         if (navBtn) {
@@ -221,7 +224,7 @@ function updateNavbar() {
         }
     }
 
-    const logoutElements = document.querySelectorAll('#userLogout, #trainerLogout');
+    const logoutElements = document.querySelectorAll('#userLogout, #trainerLogout, .logout-link');
     logoutElements.forEach(el => {
         el.addEventListener('click', async (e) => {
             e.preventDefault();
