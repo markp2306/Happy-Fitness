@@ -52,6 +52,7 @@
                     <input type="password" id="password" placeholder="••••••••" required>
                     <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('password', this)"></i>
                 </div>
+                <p style="text-align: right; margin-top: 0.5rem;"><a href="#" onclick="forgotPassword()" style="font-size: 0.8rem; color: var(--accent-color); opacity: 0.8;">Forgot Password?</a></p>
             </div>
 
             <button type="submit" class="auth-btn">Log In</button>
@@ -162,11 +163,34 @@
                     window.location.href = 'workouts.html';
                 }
             } catch (error) {
-                alert(error.message);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert('This email is already registered. Please log in instead.');
+                    // Force toggle to login mode
+                    if (!isLogin) toggleAuth.click();
+                } else if (error.code === 'auth/wrong-password') {
+                    alert('Incorrect password. Please try again or reset your password.');
+                } else if (error.code === 'auth/user-not-found') {
+                    alert('No account found with this email. Please register first.');
+                } else {
+                    alert(error.message);
+                }
                 btn.classList.remove('loading');
                 btn.disabled = false;
             }
         });
+
+        window.forgotPassword = async () => {
+            const email = document.getElementById('email').value;
+            if (!email) return alert("Please enter your email address first.");
+            
+            const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js");
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("Password reset email sent! Check your inbox.");
+            } catch (error) {
+                alert(error.message);
+            }
+        };
     </script>
     <script type="module" src="js/main.js"></script>
 </body>
