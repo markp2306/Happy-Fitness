@@ -54,6 +54,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.preventDefault();
             deleteUserAccount();
         }
+        if (e.target.id === 'hideFooterBtn') {
+            const footer = document.querySelector('footer');
+            if (footer) footer.style.display = 'none';
+        }
     });
 
     // Handle Exercise Detail Page
