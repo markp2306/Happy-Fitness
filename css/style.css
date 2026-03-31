@@ -735,7 +735,7 @@ footer {
 /* REST TIMER */
 .timer-fab {
     position: fixed;
-    bottom: 80px;
+    bottom: 40px;
     right: 30px;
     padding: 0 1.5rem;
     height: 55px;
@@ -758,7 +758,7 @@ footer {
 
 .rest-timer-container {
     position: fixed;
-    bottom: 80px;
+    bottom: 40px;
     right: 30px;
     width: 250px;
     background: rgba(255, 255, 255, 0.05);
