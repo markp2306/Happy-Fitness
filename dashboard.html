@@ -179,6 +179,26 @@
             </div>
             <div class="profile-actions">
                 <button class="save-profile-btn" onclick="updateProfile()">Save Changes</button>
+                
+                <div class="change-password-section">
+                    <button type="button" class="change-password-btn" onclick="showChangePassword()">Change Password</button>
+                    <div id="changePasswordSection" style="display: none; margin-top: 1.5rem;">
+                        <div class="form-group">
+                            <label>Old Password</label>
+                            <input type="password" id="oldPassword" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" id="newPassword" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input type="password" id="confirmPassword" placeholder="••••••••">
+                        </div>
+                        <button type="button" class="save-profile-btn submit-change-password-btn" onclick="changePassword()">Update Password</button>
+                    </div>
+                </div>
+
                 <button class="danger-btn" onclick="deleteAccount()" style="margin-top: 2rem;">Delete Account</button>
                 <button type="button" class="auth-btn" style="background: rgba(255, 255, 255, 0.1); color: var(--text-color); margin-top: 0.5rem;" onclick="closeProfileModal()">Close</button>
             </div>
@@ -375,7 +395,7 @@
                 const querySnapshot = await getDocs(q);
                 members = []; // Clear and fill global list
                 querySnapshot.forEach((doc) => {
-                    members.push(doc.data());
+                    members.push({ id: doc.id, ...doc.data() });
                 });
 
                 if (members.length === 0) {
@@ -407,6 +427,7 @@
                             <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
                                 <button class="nav-btn" style="width: 100%; justify-content: center;" onclick="manageUserWorkouts('${u.email}', '${u.name}')">Manage Workouts</button>
                                 <button class="auth-btn" style="width: 100%; background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);" onclick="selectedMemberEmail='${u.email}'; openModalForSpecificMember()">Add Workout</button>
+                                <button class="danger-btn" style="width: 100%; margin-top: 0.5rem; border-radius: 5px; font-size: 0.9rem; padding: 0.6rem;" onclick="removeMember('${u.id}', '${u.name}', '${u.email}')"><i class="fas fa-user-times"></i> Remove Member</button>
                             </div>
                         </div>
                     `).join('');
@@ -414,6 +435,25 @@
             } catch (error) {
                 console.error("Error populating members:", error);
                 if (tableBody) tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #F44336; padding: 2rem;">Failed to load members.</td></tr>';
+            }
+        async function removeMember(userId, userName, userEmail) {
+            if (confirm(`Are you sure you want to remove ${userName}? This will remove them from your management and delete their workout plans.`)) {
+                try {
+                    // Delete user doc from Firestore
+                    await deleteDoc(doc(db, "users", userId));
+
+                    // Delete workouts associated with this user
+                    const wQ = query(collection(db, "workouts"), where("targetUser", "==", userEmail));
+                    const wSnap = await getDocs(wQ);
+                    for (const d of wSnap.docs) {
+                        await deleteDoc(doc(db, "workouts", d.id));
+                    }
+                    
+                    showToast(`${userName} removed successfully!`);
+                    populateMembers();
+                } catch (error) {
+                    alert("Error removing member: " + error.message);
+                }
             }
         }
 

@@ -787,3 +787,52 @@ nav {
     border-radius: 10px;
     cursor: pointer;
 }
+
+/* PASSWORD TOGGLE */
+.password-field-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-field-container input {
+    padding-right: 3rem !important;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 1rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: var(--transition-speed);
+    z-index: 10;
+    font-size: 1.1rem;
+}
+
+.toggle-password:hover {
+    color: var(--accent-color);
+}
+
+/* CHANGE PASSWORD SECTION */
+.change-password-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.change-password-btn {
+    background: transparent;
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-speed);
+}
+
+.change-password-btn:hover {
+    background: var(--accent-color);
+    color: var(--bg-color);
+}

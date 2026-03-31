@@ -1,6 +1,6 @@
 import { auth, db } from './firebase-config.js';
 import { collection, getDocs, query, where, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { onAuthStateChanged, signOut, deleteUser, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Sync Auth State
@@ -498,3 +498,60 @@ function updateTimerDisplay() {
     document.getElementById('timerDisplay').innerText = 
         `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
+
+window.togglePasswordVisibility = function(id, icon) {
+    const input = document.getElementById(id);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+};
+
+window.showChangePassword = function() {
+    const section = document.getElementById('changePasswordSection');
+    if (section.style.display === 'none' || section.style.display === '') {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+    }
+};
+
+window.changePassword = async function() {
+    const oldPass = document.getElementById('oldPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const confirmPass = document.getElementById('confirmPassword').value;
+
+    if (!oldPass || !newPass || !confirmPass) return alert("Please fill all fields");
+    if (newPass !== confirmPass) return alert("New passwords do not match!");
+    if (newPass.length < 6) return alert("New password must be at least 6 characters long.");
+
+    const btn = document.querySelector('.submit-change-password-btn');
+    const originalText = btn.innerText;
+    btn.innerText = "Changing...";
+    btn.disabled = true;
+
+    try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("No user logged in.");
+
+        const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js");
+        
+        const credential = EmailAuthProvider.credential(user.email, oldPass);
+        await reauthenticateWithCredential(user, credential);
+        await updatePassword(user, newPass);
+        
+        showToast("Password updated successfully!");
+        document.getElementById('changePasswordSection').querySelectorAll('input').forEach(i => i.value = '');
+        document.getElementById('changePasswordSection').style.display = 'none';
+    } catch (error) {
+        alert("Failed to change password: " + error.message);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+};
