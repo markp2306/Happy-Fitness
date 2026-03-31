@@ -24,7 +24,12 @@ body {
     overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-weight: 700;
     line-height: 1.2;
 }
@@ -386,7 +391,7 @@ footer {
     border-radius: 20px;
     width: 100%;
     max-width: 450px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
 .auth-form h2 {
@@ -458,7 +463,8 @@ footer {
     overflow: hidden;
 }
 
-.workout-table th, .workout-table td {
+.workout-table th,
+.workout-table td {
     padding: 1.5rem;
     text-align: left;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -474,8 +480,13 @@ footer {
     gap: 1rem;
 }
 
-.edit-btn { color: #4CAF50; }
-.delete-btn { color: #F44336; }
+.edit-btn {
+    color: #4CAF50;
+}
+
+.delete-btn {
+    color: #F44336;
+}
 
 /* MODAL */
 .modal {
@@ -509,6 +520,7 @@ footer {
     nav .nav-btn {
         display: none;
     }
+
     .nav-links {
         display: none;
         flex-direction: column;
@@ -570,7 +582,8 @@ footer {
         -webkit-overflow-scrolling: touch;
     }
 
-    .workout-table th, .workout-table td {
+    .workout-table th,
+    .workout-table td {
         padding: 1rem;
         font-size: 0.9rem;
         white-space: nowrap;
@@ -587,17 +600,20 @@ footer {
 
 
 /* Button Loader & States */
-.auth-btn, .nav-btn {
+.auth-btn,
+.nav-btn {
     position: relative;
     transition: all 0.3s ease;
 }
 
-.auth-btn.loading, .nav-btn.loading {
+.auth-btn.loading,
+.nav-btn.loading {
     color: transparent !important;
     pointer-events: none;
 }
 
-.auth-btn.loading::after, .nav-btn.loading::after {
+.auth-btn.loading::after,
+.nav-btn.loading::after {
     content: "";
     position: absolute;
     width: 20px;
@@ -617,11 +633,17 @@ footer {
 }
 
 @keyframes btn-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
-.auth-btn:disabled, .nav-btn:disabled {
+.auth-btn:disabled,
+.nav-btn:disabled {
     opacity: 0.7;
     cursor: not-allowed;
 }
@@ -634,7 +656,7 @@ footer {
     .mobile-only {
         display: block !important;
     }
-    
+
     .nav-btn-mobile {
         display: inline-block;
         padding: 0.8rem 2rem;
@@ -735,7 +757,7 @@ footer {
 /* REST TIMER */
 .timer-fab {
     position: fixed;
-    bottom: 40px;
+    bottom: 20px;
     right: 30px;
     padding: 0 1.5rem;
     height: 55px;
