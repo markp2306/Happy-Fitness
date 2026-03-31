@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainer Dashboard | Happy Fitness</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { auth, db } from './js/firebase-config.js';
+        import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+        window.auth = auth;
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.query = query;
+        window.where = where;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+        window.onAuthStateChanged = onAuthStateChanged;
+    </script>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="logo.jpeg" alt="Logo" style="height: 40px; border-radius: 5px;">
+            <a href="index.html" class="logo">HAPPY <span>FITNESS</span></a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="workouts.html">Workouts</a></li>
+            <li><a href="#" id="openProfile">Profile</a></li>
+        </ul>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="#" id="trainerLogoutBtn" class="nav-btn">Log Out</a>
+            <div class="menu-toggle" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Container -->
+    <section class="dashboard-container">
+        
+        <!-- View 1: Students Dashboard -->
+        <div id="studentsView">
+            <div class="admin-header">
+                <div>
+                    <h1 class="section-title">My <span>Members</span></h1>
+                    <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: -1.5rem;">Select a member to manage their workout plans.</p>
+                </div>
+                <button class="nav-btn" onclick="openModal()">Add New Workout</button>
+            </div>
+            
+            <div id="studentsGrid" class="workout-grid" style="margin-top: 3rem;">
+                <!-- Member Cards will be injected here -->
+                <p style="text-align: center; color: var(--text-muted); padding: 3rem; width: 100%;">Loading members...</p>
+            </div>
+        </div>
+
+        <!-- View 2: Specific Member Management -->
+        <div id="workoutManagementView" style="display: none;">
+            <div class="admin-header" style="margin-bottom: 3rem;">
+                <div>
+                    <button class="nav-btn" onclick="backToMembers()" style="background: transparent; color: var(--accent-color); border: 1px solid var(--accent-color); margin-bottom: 2rem;"><i class="fas fa-arrow-left"></i> Back to Members</button>
+                    <h1 class="section-title">Manage <span>Workouts</span></h1>
+                    <p id="targetUserLabel" style="color: var(--accent-color); font-size: 1.3rem; font-weight: 700; margin-top: -1.5rem;">User Name</p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button id="bulkDeleteBtn" class="nav-btn" style="background: #F44336; border: none; display: none;"
+                        onclick="bulkDelete()"><i class="fas fa-trash"></i> Delete Selected</button>
+                    <button class="nav-btn" onclick="openModalForSpecificMember()">Add New Workout</button>
+                </div>
+            </div>
+
+            <div id="workoutAccordionContainer">
+                <!-- Global categories for specific user -->
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Modal for Adding/Editing Workouts -->
+    <div class="modal" id="workoutModal">
+        <form class="modal-content" id="workoutForm"
+            style="display: flex; flex-direction: column; max-height: 90vh; width: 90%; max-width: 550px;">
+            <div class="modal-header"
+                style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 1.5rem;">
+                <h2 id="modalTitle" style="margin-bottom: 1rem;">Add <span>New Workouts</span></h2>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" required
+                        style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none;">
+                        <option value="" disabled selected>Select a muscle group...</option>
+                        <option value="Chest">Chest</option>
+                        <option value="Back">Back</option>
+                        <option value="Legs">Legs</option>
+                        <option value="Front Shoulder">Front Shoulder</option>
+                        <option value="Back Shoulder">Back Shoulder</option>
+                        <option value="Biceps">Biceps</option>
+                        <option value="Triceps">Triceps</option>
+                        <option value="Cardio">Cardio</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="assignToUser">Assign to Member</label>
+                    <select id="assignToUser" required
+                        style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50px; color: white; outline: none;">
+                        <option value="" disabled selected>Select a member...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-body" style="overflow-y: auto; flex-grow: 1; padding: 1.5rem 0;">
+                <div id="exerciseListContainer" style="padding-right: 10px;">
+                    <div class="exercise-entry"
+                        style="border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; position: relative;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-color);">Exercise #1</h4>
+                        <div class="form-group">
+                            <label>Exercise Name</label>
+                            <input type="text" class="exercise-name" placeholder="Bench Press" required
+                                style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none;">
+                        </div>
+                        <div class="form-group">
+                            <label>Description & Tips</label>
+                            <input type="text" class="exercise-desc" placeholder="Perform 3 sets of 12 reps." required
+                                style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none;">
+                        </div>
+                        <div class="form-group">
+                            <label>Animation URL</label>
+                            <input type="text" class="exercise-url" placeholder="https://example.com/animation.gif"
+                                style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="nav-btn"
+                    style="background: transparent; color: var(--accent-color); border: 1px solid var(--accent-color); width: 100%; margin-bottom: 0;"
+                    onclick="addExerciseField()">+ Add Another Exercise</button>
+            </div>
+
+            <div class="modal-footer"
+                style="display: flex; gap: 1rem; margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1.5rem;">
+                <button type="submit" class="auth-btn" style="margin-top:0;">Save Workout</button>
+                <button type="button" class="auth-btn"
+                    style="background: rgba(255, 255, 255, 0.1); color: var(--text-color); margin-top:0;"
+                    onclick="closeModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content" style="max-width: 400px; max-height: 85vh; overflow-y: auto; padding: 2.5rem;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                <h2 style="margin: 0;">My <span>Profile</span></h2>
+            </div>
+            <div class="profile-info">
+                <div class="profile-field">
+                    <label>Full Name</label>
+                    <input type="text" id="profileName" class="value" style="width: 100%; outline: none;" placeholder="Your Name">
+                </div>
+                <div class="profile-field">
+                    <label>Email Address</label>
+                    <div id="profileEmail" class="value" style="opacity: 0.7; cursor: not-allowed;">Email</div>
+                </div>
+                <div class="profile-field">
+                    <label>Role</label>
+                    <div id="profileRole" class="value" style="opacity: 0.7; text-transform: capitalize;">Trainer</div>
+                </div>
+            </div>
+            <div class="profile-actions">
+                <button class="save-profile-btn" onclick="updateProfile()">Save Changes</button>
+                <button class="danger-btn" onclick="deleteAccount()" style="margin-top: 2rem;">Delete Account</button>
+                <button type="button" class="auth-btn" style="background: rgba(255, 255, 255, 0.1); color: var(--text-color); margin-top: 0.5rem;" onclick="closeProfileModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Feedback Toast (Optional improvement) -->
+    <div id="toast"
+        style="position: fixed; bottom: 20px; right: 20px; background: var(--accent-color); color: var(--bg-color); padding: 1rem 2rem; border-radius: 5px; display: none; font-weight: 700; z-index: 10000;">
+        Successfully updated!
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="copyright">
+            &copy; 2026 Happy Fitness Trainer Portal.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { auth, db } from './js/firebase-config.js';
+        import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+        let workouts = [];
+        let members = [];
+        let editingId = null;
+        let currentTrainerEmail = null;
+        let selectedMemberEmail = null; // Track which member is being managed
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentTrainerEmail = user.email;
+                loadProfileData();
+                populateMembers(); // Load member cards initially
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        window.openProfileModal = () => document.getElementById('profileModal').style.display = 'flex';
+        window.closeProfileModal = () => document.getElementById('profileModal').style.display = 'none';
+
+        window.toggleMobileMenu = () => {
+            const nav = document.querySelector('.nav-links');
+            nav.classList.toggle('active');
+        };
+
+        window.manageUserWorkouts = (email, name) => {
+            selectedMemberEmail = email;
+            document.getElementById('studentsView').style.display = 'none';
+            document.getElementById('workoutManagementView').style.display = 'block';
+            document.getElementById('targetUserLabel').innerText = name + ` (${email})`;
+            populateWorkouts(email);
+        };
+
+        window.backToMembers = () => {
+            selectedMemberEmail = null;
+            document.getElementById('studentsView').style.display = 'block';
+            document.getElementById('workoutManagementView').style.display = 'none';
+        };
+
+        window.openModalForSpecificMember = () => {
+            openModal();
+            if (selectedMemberEmail) {
+                document.getElementById('assignToUser').value = selectedMemberEmail;
+                // Optionally hide the select field if we are in member-specific mode
+                document.getElementById('assignToUser').parentElement.style.display = 'none';
+            }
+        };
+
+        // Redefine openModal to reset fields
+        const originalOpenModal = window.openModal;
+        window.openModal = (id = null) => {
+            document.getElementById('assignToUser').parentElement.style.display = 'block';
+            editingId = id;
+            document.getElementById('workoutModal').style.display = 'flex';
+            if (id) {
+                const w = workouts.find(x => x.id === id);
+                document.getElementById('category').value = w.category;
+                document.getElementById('assignToUser').value = w.targetUser || '';
+                document.getElementById('exerciseListContainer').innerHTML = `
+                    <div class="exercise-entry" style="border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; position: relative;">
+                        <input type="text" class="exercise-name" value="${w.exercise}" required style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 1rem;">
+                        <input type="text" class="exercise-desc" value="${w.desc}" required style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 1rem;">
+                        <input type="text" class="exercise-url" value="${w.animationUrl}" style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none;">
+                    </div>
+                `;
+                document.getElementById('modalTitle').innerHTML = 'Edit <span>Workout</span>';
+                document.querySelector('button[onclick="addExerciseField()"]').style.display = 'none';
+            } else {
+                document.getElementById('workoutForm').reset();
+                resetExerciseFields();
+                document.getElementById('modalTitle').innerHTML = 'Add <span>New Workouts</span>';
+                document.querySelector('button[onclick="addExerciseField()"]').style.display = 'block';
+            }
+        };
+
+        document.getElementById('openProfile').addEventListener('click', (e) => {
+            e.preventDefault();
+            openProfileModal();
+        });
+
+        async function loadProfileData() {
+            try {
+                const q = query(collection(db, "trainers"), where("email", "==", currentTrainerEmail));
+                const docSnap = await getDocs(q);
+                if (!docSnap.empty) {
+                    const data = docSnap.docs[0].data();
+                    document.getElementById('profileName').value = data.name || '';
+                    document.getElementById('profileEmail').innerText = data.email;
+                    document.getElementById('profileRole').innerText = data.role || 'Trainer';
+                }
+            } catch (error) {
+                console.error("Error loading profile:", error);
+            }
+        }
+
+        window.updateProfile = async function () {
+            const newName = document.getElementById('profileName').value;
+            if (!newName) return alert("Name cannot be empty");
+            
+            const btn = document.querySelector('.save-profile-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "Updating...";
+            btn.disabled = true;
+
+            try {
+                const q = query(collection(db, "trainers"), where("email", "==", currentTrainerEmail));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    await updateDoc(doc(db, "trainers", snap.docs[0].id), {
+                        name: newName
+                    });
+                    localStorage.setItem('trainerName', newName);
+                    showToast("Profile updated successfully!");
+                }
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        window.deleteAccount = async function () {
+            if (confirm("WARNING: Are you sure you want to delete your account? This action is permanent and will remove all your workout plans and data.")) {
+                const btn = document.querySelector('.danger-btn');
+                btn.innerText = 'Deleting...';
+                btn.disabled = true;
+                
+                try {
+                    // 1. Delete trainer doc
+                    const q = query(collection(db, "trainers"), where("email", "==", currentTrainerEmail));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        for (const docItem of snap.docs) {
+                            await deleteDoc(doc(db, "trainers", docItem.id));
+                        }
+                    }
+                    
+                    // 2. Delete workouts by this trainer
+                    const wQ = query(collection(db, "workouts"), where("trainer", "==", currentTrainerEmail));
+                    const wSnap = await getDocs(wQ);
+                    for (const d of wSnap.docs) {
+                        await deleteDoc(doc(db, "workouts", d.id));
+                    }
+
+                    // 3. Delete auth user
+                    const user = auth.currentUser;
+                    if (user) {
+                        await user.delete();
+                    }
+
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    console.error(error);
+                    alert("Account deletion partially failed or requires recent login. If you just logged in and it still fails, it might be due to security reasons. \nDetails: " + error.message);
+                    btn.innerText = 'Delete Account';
+                    btn.disabled = false;
+                }
+            }
+        };
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        async function populateMembers() {
+            const tableBody = document.getElementById('usersTableBody');
+            const assignSelect = document.getElementById('assignToUser');
+
+            try {
+                const q = query(collection(db, "users"), where("trainer", "==", currentTrainerEmail));
+                const querySnapshot = await getDocs(q);
+                members = []; // Clear and fill global list
+                querySnapshot.forEach((doc) => {
+                    members.push(doc.data());
+                });
+
+                if (members.length === 0) {
+                    if (tableBody) tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 3rem; color: var(--text-muted);">No members registered with you yet.</td></tr>';
+                    if (assignSelect) assignSelect.innerHTML = '<option value="" disabled>No members found</option>';
+                    return;
+                }
+
+                if (assignSelect) {
+                    assignSelect.innerHTML = '<option value="" disabled selected>Select a member...</option>' + 
+                        members.map(u => `<option value="${u.email}">${u.name}</option>`).join('');
+                }
+
+                const grid = document.getElementById('studentsGrid');
+                if (!grid) return;
+
+                if (members.length === 0) {
+                    grid.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 5rem 0; width: 100%;">No members assigned to you yet.</p>';
+                } else {
+                    grid.innerHTML = members.map(u => `
+                        <div class="day-card" style="padding: 2.5rem; text-align: center; display: flex; flex-direction: column; gap: 1.5rem; border-color: rgba(255, 215, 0, 0.1);">
+                            <div style="background: rgba(255, 215, 0, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                                <i class="fas fa-user-check" style="font-size: 2rem; color: var(--accent-color);"></i>
+                            </div>
+                            <div>
+                                <h3 style="font-size: 1.5rem; color: var(--text-color);">${u.name}</h3>
+                                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">${u.email}</p>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
+                                <button class="nav-btn" style="width: 100%; justify-content: center;" onclick="manageUserWorkouts('${u.email}', '${u.name}')">Manage Workouts</button>
+                                <button class="auth-btn" style="width: 100%; background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);" onclick="selectedMemberEmail='${u.email}'; openModalForSpecificMember()">Add Workout</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error("Error populating members:", error);
+                if (tableBody) tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #F44336; padding: 2rem;">Failed to load members.</td></tr>';
+            }
+        }
+
+        const logoutBtn = document.getElementById('trainerLogoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const { signOut } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"); 
+                await signOut(auth);
+                localStorage.clear();
+                window.location.href = 'index.html';
+            });
+        }
+
+        async function populateWorkouts(targetUser = null) {
+            const container = document.getElementById('workoutAccordionContainer');
+
+            try {
+                let q = query(collection(db, "workouts"), where("trainer", "==", currentTrainerEmail));
+                if (targetUser) {
+                    q = query(collection(db, "workouts"), 
+                              where("trainer", "==", currentTrainerEmail), 
+                              where("targetUser", "==", targetUser));
+                }
+                const querySnapshot = await getDocs(q);
+                workouts = [];
+                querySnapshot.forEach((doc) => {
+                    workouts.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (workouts.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 3rem;">No workouts added yet. Click "Add New Workout" to begin.</p>';
+                    updateBulkDeleteBtn();
+                    return;
+                }
+
+                const grouped = workouts.reduce((acc, w) => {
+                    if (!acc[w.category]) acc[w.category] = [];
+                    acc[w.category].push(w);
+                    return acc;
+                }, {});
+
+                container.innerHTML = Object.keys(grouped).map(category => {
+                    const safeCategory = category.replace(/\s+/g, '-').toLowerCase();
+                    return `
+                        <div class="category-wrapper" style="margin-bottom: 1.5rem;">
+                            <div class="category-card" onclick="toggleDashboardCategory(this)" style="background: var(--secondary-bg-color); padding: 1.2rem 2rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: var(--transition-speed);">
+                                <h3 style="font-size: 1.3rem; color: var(--accent-color); margin: 0;">${category} <span>Section</span></h3>
+                                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                    <span style="background: rgba(255, 215, 0, 0.1); color: var(--accent-color); padding: 0.2rem 0.8rem; border-radius: 50px; font-weight: 700; font-size: 0.8rem;">${grouped[category].length}</span>
+                                    <i class="fas fa-chevron-down toggle-icon" style="transition: transform 0.3s; font-size: 0.9rem;"></i>
+                                </div>
+                            </div>
+                            <div class="category-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out;">
+                                <div class="table-responsive">
+                                    <table class="workout-table" style="margin-top: 1rem; border-radius: 12px; background: rgba(255, 255, 255, 0.02);">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 50px;"><input type="checkbox" data-category="${safeCategory}" onchange="toggleCategorySelectAll(this)"></th>
+                                                <th>Exercise</th>
+                                                <th>Description</th>
+                                                <th>Animation</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${grouped[category].map(w => `
+                                                <tr>
+                                                    <td><input type="checkbox" class="row-check" data-category="${safeCategory}" value="${w.id}" onchange="updateBulkDeleteBtn()"></td>
+                                                    <td>${w.exercise}</td>
+                                                    <td>${w.desc}</td>
+                                                    <td><a href="${w.animationUrl}" target="_blank" style="color: var(--accent-color);">Link</a></td>
+                                                    <td class="action-btns">
+                                                        <a href="#" class="edit-btn" onclick="editWorkout('${w.id}')"><i class="fas fa-edit"></i></a>
+                                                        <a href="#" class="delete-btn" onclick="deleteWorkout('${w.id}')"><i class="fas fa-trash"></i></a>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error populating workouts:", error);
+            }
+        }
+
+        window.toggleDashboardCategory = function (card) {
+            const wrapper = card.parentElement;
+            const content = wrapper.querySelector('.category-content');
+            const icon = card.querySelector('.toggle-icon');
+            if (content.style.maxHeight === '0px' || !content.style.maxHeight) {
+                content.style.maxHeight = content.scrollHeight + 100 + "px";
+                icon.style.transform = "rotate(180deg)";
+                card.style.borderColor = "var(--accent-color)";
+            } else {
+                content.style.maxHeight = "0";
+                icon.style.transform = "rotate(0deg)";
+                card.style.borderColor = "rgba(255, 255, 255, 0.05)";
+            }
+        };
+
+        window.toggleCategorySelectAll = function (master) {
+            const cat = master.getAttribute('data-category');
+            document.querySelectorAll(`.row-check[data-category="${cat}"]`).forEach(cb => cb.checked = master.checked);
+            updateBulkDeleteBtn();
+        };
+
+        window.updateBulkDeleteBtn = function () {
+            const selectedCount = document.querySelectorAll('.row-check:checked').length;
+            const btn = document.getElementById('bulkDeleteBtn');
+            if (btn) btn.style.display = selectedCount > 0 ? 'flex' : 'none';
+        };
+
+        window.bulkDelete = async function () {
+            if (confirm('Delete all selected workouts?')) {
+                const selected = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+                for (const id of selected) await deleteDoc(doc(db, "workouts", id));
+                populateWorkouts(selectedMemberEmail);
+            }
+        };
+
+        window.openModal = function (id = null) {
+            editingId = id;
+            document.getElementById('workoutModal').style.display = 'flex';
+            if (id) {
+                const w = workouts.find(x => x.id === id);
+                document.getElementById('category').value = w.category;
+                document.getElementById('assignToUser').value = w.targetUser || '';
+                document.getElementById('exerciseListContainer').innerHTML = `
+                    <div class="exercise-entry" style="border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; position: relative;">
+                        <input type="text" class="exercise-name" value="${w.exercise}" required style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 1rem;">
+                        <input type="text" class="exercise-desc" value="${w.desc}" required style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 1rem;">
+                        <input type="text" class="exercise-url" value="${w.animationUrl}" style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none;">
+                    </div>
+                `;
+                document.getElementById('modalTitle').innerHTML = 'Edit <span>Workout</span>';
+                document.querySelector('button[onclick="addExerciseField()"]').style.display = 'none';
+            } else {
+                document.getElementById('workoutForm').reset();
+                resetExerciseFields();
+                document.getElementById('modalTitle').innerHTML = 'Add <span>New Workouts</span>';
+                document.querySelector('button[onclick="addExerciseField()"]').style.display = 'block';
+            }
+        };
+
+        window.closeModal = () => document.getElementById('workoutModal').style.display = 'none';
+
+        window.addExerciseField = function () {
+            const container = document.getElementById('exerciseListContainer');
+            const count = container.querySelectorAll('.exercise-entry').length + 1;
+            const div = document.createElement('div');
+            div.className = 'exercise-entry';
+            div.style = 'border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; position: relative;';
+            div.innerHTML = `
+                <button type="button" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: #F44336; cursor: pointer;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                <h4 style="margin-bottom: 1rem; color: var(--accent-color);">Exercise #${count}</h4>
+                <input type="text" class="exercise-name" placeholder="Exercise Name" required style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 1rem;">
+                <input type="text" class="exercise-desc" placeholder="Perform 3 sets of 12 reps." required style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 1rem;">
+                <input type="text" class="exercise-url" placeholder="https://example.com/animation.gif" style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none;">
+            `;
+            container.appendChild(div);
+        }
+
+        window.resetExerciseFields = function () {
+            document.getElementById('exerciseListContainer').innerHTML = `
+                <div class="exercise-entry" style="border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; position: relative;">
+                    <h4 style="margin-bottom: 1rem; color: var(--accent-color);">Exercise #1</h4>
+                    <input type="text" class="exercise-name" placeholder="Bench Press" required style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 1rem;">
+                    <input type="text" class="exercise-desc" placeholder="Perform 3 sets of 12 reps." required style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 1rem;">
+                    <input type="text" class="exercise-url" placeholder="https://example.com/animation.gif" style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none;">
+                </div>
+            `;
+        }
+
+        document.getElementById('workoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('.auth-btn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            const category = document.getElementById('category').value;
+            const targetUser = document.getElementById('assignToUser').value;
+            const entries = document.querySelectorAll('.exercise-entry');
+            try {
+                if (editingId) {
+                    const entry = entries[0];
+                    await updateDoc(doc(db, "workouts", editingId), {
+                        category,
+                        targetUser,
+                        exercise: entry.querySelector('.exercise-name').value,
+                        desc: entry.querySelector('.exercise-desc').value,
+                        animationUrl: entry.querySelector('.exercise-url').value
+                    });
+                } else {
+                    for (const entry of entries) {
+                        await addDoc(collection(db, "workouts"), {
+                            category,
+                            targetUser,
+                            exercise: entry.querySelector('.exercise-name').value,
+                            desc: entry.querySelector('.exercise-desc').value,
+                            animationUrl: entry.querySelector('.exercise-url').value,
+                            trainer: currentTrainerEmail,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                }
+                closeModal();
+                populateWorkouts(selectedMemberEmail);
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        });
+
+        window.deleteWorkout = async (id) => {
+            if (confirm('Delete this exercise?')) {
+                await deleteDoc(doc(db, "workouts", id));
+                populateWorkouts(selectedMemberEmail);
+            }
+        };
+
+        window.editWorkout = (id) => openModal(id);
+    </script>
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>

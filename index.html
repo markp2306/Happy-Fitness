@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Fitness | Premium Workout Plans</title>
+    <meta name="description" content="Happy Fitness provides personalized weekly workout plans and exercise animations for a healthier lifestyle.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="logo.jpeg" alt="Logo" style="height: 40px; border-radius: 5px;">
+            <a href="index.html" class="logo">HAPPY <span>FITNESS</span></a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="workouts.html">Workouts</a></li>
+            <li><a href="login.html">Trainer Login</a></li>
+        </ul>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="workouts.html" class="nav-btn">Get Workout</a>
+            <div class="menu-toggle" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Transform Your Body <span>Transform Your Life</span></h1>
+        <p>Expert weekly workout plans and HD exercise animations to guide your fitness journey.</p>
+        <a href="workouts.html" class="cta-btn">Start Training Now</a>
+    </section>
+
+    <!-- Quotes Section -->
+    <section class="quotes-section" style="padding: 100px 5%; text-align: center; background: linear-gradient(rgba(13, 13, 13, 0.9), rgba(13, 13, 13, 0.9)), url('assets/hero_fitness.png'); background-size: cover; background-attachment: fixed;">
+        <h2 class="section-title">Daily <span>Motivation</span></h2>
+        <div class="quotes-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 50px;">
+            <div class="quote-card" style="background: rgba(255, 255, 255, 0.03); padding: 3rem 2rem; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05); transition: var(--transition-speed); position: relative; overflow: hidden; height: 100%;">
+                <i class="fas fa-quote-left" style="position: absolute; top: 1rem; left: 1.5rem; font-size: 2rem; color: var(--accent-color); opacity: 0.2;"></i>
+                <p style="font-size: 1.2rem; font-style: italic; position: relative; z-index: 1;">"The only bad workout is the one that didn't happen."</p>
+                <h4 style="margin-top: 1.5rem; color: var(--accent-color);">- Unknown</h4>
+            </div>
+            <div class="quote-card" style="background: rgba(255, 255, 255, 0.03); padding: 3rem 2rem; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05); transition: var(--transition-speed); position: relative; overflow: hidden; height: 100%;">
+                <i class="fas fa-quote-left" style="position: absolute; top: 1rem; left: 1.5rem; font-size: 2rem; color: var(--accent-color); opacity: 0.2;"></i>
+                <p style="font-size: 1.2rem; font-style: italic; position: relative; z-index: 1;">"Strength does not come from winning. Your struggles develop your strengths."</p>
+                <h4 style="margin-top: 1.5rem; color: var(--accent-color);">- Arnold Schwarzenegger</h4>
+            </div>
+            <div class="quote-card" style="background: rgba(255, 255, 255, 0.03); padding: 3rem 2rem; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05); transition: var(--transition-speed); position: relative; overflow: hidden; height: 100%;">
+                <i class="fas fa-quote-left" style="position: absolute; top: 1rem; left: 1.5rem; font-size: 2rem; color: var(--accent-color); opacity: 0.2;"></i>
+                <p style="font-size: 1.2rem; font-style: italic; position: relative; z-index: 1;">"Don't stop when you're tired. Stop when you're done."</p>
+                <h4 style="margin-top: 1.5rem; color: var(--accent-color);">- David Goggins</h4>
+            </div>
+        </div>
+    </section>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content" style="max-width: 400px; max-height: 85vh; overflow-y: auto; padding: 2.5rem;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                <h2 style="margin: 0;">My <span>Profile</span></h2>
+            </div>
+            <div class="profile-info">
+                <div class="profile-field">
+                    <label>Full Name</label>
+                    <input type="text" id="profileName" class="value" style="width: 100%; outline: none;" placeholder="Your Name">
+                </div>
+                <div class="profile-field">
+                    <label>Email Address</label>
+                    <div id="profileEmail" class="value" style="opacity: 0.7; cursor: not-allowed;">Email</div>
+                </div>
+                <div class="profile-field" id="trainerField" style="display: none;">
+                    <label>Assigned Trainer</label>
+                    <select id="profileTrainerSelect" class="value" style="width: 100%; outline: none; background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem;">
+                        <option value="">Loading trainers...</option>
+                    </select>
+                </div>
+                <div class="profile-field">
+                    <label>Role</label>
+                    <div id="profileRole" class="value" style="opacity: 0.7; text-transform: capitalize;">User</div>
+                </div>
+            </div>
+            <div class="profile-actions">
+                <button class="save-profile-btn" id="updateUserProfileBtn">Save Changes</button>
+                <button class="danger-btn" id="deleteUserAccountBtn" style="margin-top: 2rem;">Delete Account</button>
+                <button type="button" class="auth-btn" style="background: rgba(255, 255, 255, 0.1); color: var(--text-color); margin-top: 0.5rem;" onclick="document.getElementById('profileModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" style="position: fixed; bottom: 20px; right: 20px; background: var(--accent-color); color: var(--bg-color); padding: 1rem 2rem; border-radius: 5px; display: none; font-weight: 700; z-index: 10000;">
+        Successfully updated!
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-info">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <img src="logo.jpeg" alt="Logo" style="height: 35px; border-radius: 4px;">
+                    <a href="index.html" class="footer-logo">HAPPY FITNESS</a>
+                </div>
+                <p style="color: var(--text-muted); margin-top: 1rem; max-width: 300px;">Elevate your fitness journey with expert guidance and premium content.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="workouts.html">Workouts</a></li>
+                    <li><a href="login.html">Trainer Dashboard</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Use</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Social</h4>
+                <div style="display: flex; gap: 1rem; font-size: 1.2rem; color: var(--text-muted);">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-facebook-p"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="copyright">
+            &copy; 2026 Happy Fitness. All rights reserved. Designed for Premium Results.
+        </div>
+    </footer>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

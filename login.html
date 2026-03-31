@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainer Login | Happy Fitness</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="logo.jpeg" alt="Logo" style="height: 40px; border-radius: 5px;">
+            <a href="index.html" class="logo">HAPPY <span>FITNESS</span></a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="workouts.html">Workouts</a></li>
+        </ul>
+        <a href="login.html" class="nav-btn">Trainer Login</a>
+    </nav>
+
+    <!-- Login/Register Section -->
+    <section class="auth-container">
+        <form class="auth-form" id="loginForm">
+            <h2 id="authTitle">Trainer <span>Login</span></h2>
+            
+            <div id="registerFields" style="display: none;">
+                <div class="form-group">
+                    <label for="trainerName">Full Name</label>
+                    <input type="text" id="trainerName" placeholder="Mark Peterson">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="trainer@happyfitness.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="auth-btn">Log In</button>
+            <p style="text-align: center; margin-top: 1.5rem; color: var(--text-muted);">New trainer? <a href="#" id="toggleAuth" style="color: var(--accent-color);">Register here</a></p>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="copyright">
+            &copy; 2026 Happy Fitness. All rights reserved.
+        </div>
+    </footer>
+
+    <script type="module">
+        import { auth, db } from './js/firebase-config.js';
+        import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        const loginForm = document.getElementById('loginForm');
+        const authTitle = document.getElementById('authTitle');
+        const toggleAuth = document.getElementById('toggleAuth');
+        const registerFields = document.getElementById('registerFields');
+        let isLogin = true;
+
+        toggleAuth.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            authTitle.innerHTML = isLogin ? 'Trainer <span>Login</span>' : 'Trainer <span>Register</span>';
+            toggleAuth.innerText = isLogin ? 'Register here' : 'Login here';
+            registerFields.style.display = isLogin ? 'none' : 'block';
+            document.querySelector('.auth-btn').innerText = isLogin ? 'Log In' : 'Sign Up';
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('.auth-btn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                if (isLogin) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    localStorage.setItem('trainerLoggedIn', 'true');
+                    localStorage.setItem('trainerEmail', email);
+                    window.location.href = 'dashboard.html';
+                } else {
+                    const name = document.getElementById('trainerName').value;
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    
+                    // Save trainer profile to Firestore
+                    await setDoc(doc(db, "trainers", userCredential.user.uid), {
+                        name: name,
+                        email: email,
+                        role: 'trainer'
+                    });
+
+                    localStorage.setItem('trainerLoggedIn', 'true');
+                    localStorage.setItem('trainerEmail', email);
+                    localStorage.setItem('trainerName', name);
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (error) {
+                alert(error.message);
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
